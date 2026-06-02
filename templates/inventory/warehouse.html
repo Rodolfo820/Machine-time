@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Bodega - Machine Time{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Bodega de Máquinas</h1>
+    {% if current_user.role == 'supervisor' %}
+        <button onclick="document.getElementById('addForm').style.display='block'" class="btn btn-success">+ Agregar a Bodega</button>
+    {% endif %}
+</div>
+
+{% if current_user.role == 'supervisor' %}
+    <div id="addForm" class="card" style="display: none; margin-bottom: 2rem;">
+        <h2>Agregar Máquina a Bodega</h2>
+        <form method="POST" action="/inventory/warehouse/add">
+            <div class="form-group">
+                <label for="machine_id">Máquina</label>
+                <select id="machine_id" name="machine_id" required>
+                    <option value="">-- Seleccionar --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="warehouse_location">Ubicación en Bodega</label>
+                <input type="text" id="warehouse_location" name="warehouse_location" required placeholder="Ej: Estante A-1">
+            </div>
+            
+            <div class="form-group">
+                <label for="reason">Razón</label>
+                <textarea id="reason" name="reason" rows="3" required placeholder="Razón del almacenamiento..."></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-success" style="flex: 1;">Agregar</button>
+                <button type="button" onclick="document.getElementById('addForm').style.display='none'" class="btn btn-primary" style="flex: 1;">Cancelar</button>
+            </div>
+        </form>
+    </div>
+{% endif %}
+
+<div class="card">
+    <h2>Máquinas en Bodega</h2>
+    {% if warehouse.items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Serial</th>
+                    <th>Tipo</th>
+                    <th>Ubicación Bodega</th>
+                    <th>Razón</th>
+                    <th>Entrada</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in warehouse.items %}
+                    <tr>
+                        <td><strong>{{ item.serial }}</strong></td>
+                        <td>{{ item.machine_type }}</td>
+                        <td>{{ item.warehouse_location }}</td>
+                        <td>{{ item.reason }}</td>
+                        <td>{{ item.entry_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if current_user.role == 'supervisor' %}
+                                <form method="POST" action="/inventory/warehouse/{{ item.id }}/remove" style="display: inline;">
+                                    <input type="text" name="new_location" placeholder="Nueva ubicación" style="width: 150px; padding: 0.3rem;">
+                                    <button type="submit" class="btn btn-small btn-success">Remover</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 1rem; text-align: center;">
+            {% if warehouse.has_prev %}
+                <a href="?page={{ warehouse.prev_num }}" class="btn btn-small">← Anterior</a>
+            {% endif %}
+            
+            <span style="margin: 0 1rem;">Página {{ warehouse.page }} de {{ warehouse.pages }}</span>
+            
+            {% if warehouse.has_next %}
+                <a href="?page={{ warehouse.next_num }}" class="btn btn-small">Siguiente →</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>No hay máquinas en bodega</p>
+    {% endif %}
+</div>
+
+<a href="/inventory/" class="btn btn-primary" style="margin-top: 1rem;">Volver a Inventario</a>
+{% endblock %}
